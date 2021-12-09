@@ -63,7 +63,7 @@ class RandomX {
 
   static Directory _findWrapperLibraryDirectory() {
     var possiblePaths = ['.', '..', '../../', '../../../'];
-    
+
     for (var p in possiblePaths) {
       var dirPath = path.join(Directory.current.path, p, _libraryDirectory);
       var dir = _isWrapperLibraryDirectory(dirPath);
