@@ -4,4 +4,4 @@ set -x
 
 make clean
 cmake .
-mak
+make

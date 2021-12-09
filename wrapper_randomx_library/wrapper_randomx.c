@@ -1,6 +1,6 @@
 
 #include <stdio.h>
-#include "../../src/randomx.h"
+#include "RandomX/src/randomx.h"
 #include "wrapper_randomx.h"
 
 randomx_cache* _randomCaches[1024];
