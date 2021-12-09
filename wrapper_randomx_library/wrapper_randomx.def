@@ -1,0 +1,6 @@
+LIBRARY   wrapper_randomx
+EXPORTS
+   wrapper_randomx_init
+   wrapper_randomx_size_of_hash
+   wrapper_randomx_hash
+   wrapper_randomx_destroy
