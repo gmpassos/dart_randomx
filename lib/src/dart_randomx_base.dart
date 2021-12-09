@@ -1,6 +1,6 @@
 import 'dart:typed_data';
 import 'dart:ffi' as ffi;
-import 'dart:io' show Platform, Directory;
+import 'dart:io' show Platform, Directory, File;
 
 import 'package:ffi/ffi.dart';
 import 'package:path/path.dart' as path;
@@ -51,13 +51,32 @@ class RandomX {
   }
 
   static final String _libraryDirectory = 'wrapper_randomx_library';
+  static final String _libraryHeaderFile = 'wrapper_randomx.h';
   static final String _libraryName = 'libwrapper_randomx';
 
   static String _getLibraryPath() {
     var libExt = _getPlatformExtension();
-    var libraryPath = path.join(
-        Directory.current.path, _libraryDirectory, '$_libraryName$libExt');
+    var wrapperLibDir = _findWrapperLibraryDirectory();
+    var libraryPath = path.join(wrapperLibDir.path, '$_libraryName$libExt');
     return libraryPath;
+  }
+
+  static Directory _findWrapperLibraryDirectory() {
+    var possiblePaths = ['.', '..', '../../', '../../../'];
+    for (var p in possiblePaths) {
+      var dirPath = path.join(Directory.current.path, p, _libraryDirectory);
+      var dir = Directory(dirPath);
+      if (dir.existsSync()) {
+        var dirAbsolute = dir.absolute;
+        var file = File(path.join(dirAbsolute.path, _libraryHeaderFile));
+
+        if (file.existsSync() && file.lengthSync() > 100) {
+          return dirAbsolute;
+        }
+      }
+    }
+
+    return Directory.current;
   }
 
   static String _getPlatformExtension() {

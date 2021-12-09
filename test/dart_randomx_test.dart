@@ -6,8 +6,6 @@ import 'package:test/test.dart';
 void main() {
   group('RandomX', () {
     test('basic', () {
-      //expect(awesome.isAwesome, isTrue);
-
       var randomX = RandomX();
 
       print(randomX);
