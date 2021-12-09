@@ -1,6 +1,6 @@
-import 'dart:typed_data';
 import 'dart:ffi' as ffi;
 import 'dart:io' show Platform, Directory, File;
+import 'dart:typed_data';
 
 import 'package:ffi/ffi.dart';
 import 'package:path/path.dart' as path;
@@ -63,20 +63,28 @@ class RandomX {
 
   static Directory _findWrapperLibraryDirectory() {
     var possiblePaths = ['.', '..', '../../', '../../../'];
+    
     for (var p in possiblePaths) {
       var dirPath = path.join(Directory.current.path, p, _libraryDirectory);
-      var dir = Directory(dirPath);
-      if (dir.existsSync()) {
-        var dirAbsolute = dir.absolute;
-        var file = File(path.join(dirAbsolute.path, _libraryHeaderFile));
-
-        if (file.existsSync() && file.lengthSync() > 100) {
-          return dirAbsolute;
-        }
+      var dir = _isWrapperLibraryDirectory(dirPath);
+      if (dir != null) {
+        return dir;
       }
     }
 
     return Directory.current;
+  }
+
+  static Directory? _isWrapperLibraryDirectory(String dirPath) {
+    var dir = Directory(dirPath);
+    if (dir.existsSync()) {
+      var dirAbsolute = dir.absolute;
+      var file = File(path.join(dirAbsolute.path, _libraryHeaderFile));
+      if (file.existsSync() && file.lengthSync() > 100) {
+        return dirAbsolute;
+      }
+    }
+    return null;
   }
 
   static String _getPlatformExtension() {
