@@ -10,6 +10,7 @@
   - Full memory mode uses 3 threads to call `randomx_init_dataset`.
 - `README.md`: added badges ;-P
 - base_codecs: ^1.0.1
+- collection: ^1.15.0
 
 ## 1.0.0
 
