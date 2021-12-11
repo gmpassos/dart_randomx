@@ -1,3 +1,16 @@
+## 1.0.1
+
+- Added executable: 
+  - `dart_randomx`: computes a file hash.
+- `RandomX`
+  - Improved load of library and path resolution. 
+  - Added `configuration-monero.h` to replace `RandomX/src/configuration.h`:
+    - Now compatible with `Monero` mining.
+  - Added support for `RANDOMX_FLAG_JIT` and `RANDOMX_FLAG_FULL_MEM`.
+  - Full memory mode uses 3 threads to call `randomx_init_dataset`.
+- `README.md`: added badges ;-P
+- base_codecs: ^1.0.1
+
 ## 1.0.0
 
 - Initial version.

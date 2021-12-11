@@ -4,6 +4,8 @@ set -x
 
 git -C RandomX pull || git clone https://github.com/tevador/RandomX.git
 
+cp -f configuration-monero.h ./RandomX/src/configuration.h
+
 cd RandomX
 
 mkdir -p build

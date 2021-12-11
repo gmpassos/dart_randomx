@@ -5,7 +5,7 @@ add_library(wrapper_randomx_library SHARED wrapper_randomx.c wrapper_randomx.def
 
 add_library(randomx STATIC IMPORTED)
 
-target_link_libraries(wrapper_randomx_library librandomx.a -lstdc++)
+target_link_libraries(wrapper_randomx_library librandomx.a -lstdc++ -lpthread)
 target_link_libraries(wrapper_randomx_library -L.)
 
 set_target_properties(wrapper_randomx_library PROPERTIES

@@ -1,7 +1,9 @@
 import 'dart:typed_data';
 import 'package:dart_randomx/dart_randomx.dart';
 
-void main() {
+Future<void> main() async {
+  await RandomX.loadLib();
+
   var randomX = RandomX();
 
   print(randomX);
