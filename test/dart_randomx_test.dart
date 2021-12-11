@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:dart_randomx/dart_randomx.dart';
@@ -7,7 +8,13 @@ import 'package:test/test.dart';
 void main() {
   group('RandomX', () {
     setUp(() async {
+      print('Platform.operatingSystem: ${Platform.operatingSystem}');
+      print(
+          'Platform.operatingSystemVersion: ${Platform.operatingSystemVersion}');
+
       expect(await RandomX.loadLib(), isTrue);
+
+      print('RandomX.loadedLibraryPath: ${RandomX.loadedLibraryPath}');
     });
 
     test('basic', () {

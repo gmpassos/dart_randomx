@@ -8,6 +8,7 @@
     - Now compatible with `Monero` mining.
   - Added support for `RANDOMX_FLAG_JIT` and `RANDOMX_FLAG_FULL_MEM`.
   - Full memory mode uses 3 threads to call `randomx_init_dataset`.
+  - Compiled libraries for `Linux` (`x64`) and `MacOS` (`x64` and `arm64`).
 - `README.md`: added badges ;-P
 - base_codecs: ^1.0.1
 - collection: ^1.15.0
