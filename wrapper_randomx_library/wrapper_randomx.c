@@ -7,10 +7,16 @@
 #include "RandomX/src/randomx.h"
 #include "wrapper_randomx.h"
 
-
 randomx_cache* _randomXCaches[1024];
 randomx_dataset* _randomXDatasets[1024];
 randomx_vm* _vms[1024];
+
+void _printBytes(char* message, uint8_t* bytes, int32_t length) {
+    printf("%s: ", message);
+    for (unsigned i = 0; i < length; ++i)
+        printf("%02x", bytes[i] & 0xff);
+    printf("\n");
+}
 
 struct _thread_args_struct
 {
@@ -22,6 +28,8 @@ struct _thread_args_struct
 void *_thread_init_dataset(void *arguments) {
    struct _thread_args_struct *args = arguments;
    int32_t id = args->id;
+
+   //printf("[RandomX] randomx_init_dataset[%d]> startItem: %lu ; itemCount: %lu\n", id, args->startItem, args->itemCount);
 
    randomx_init_dataset(_randomXDatasets[id], _randomXCaches[id], args->startItem, args->itemCount);
 
@@ -103,23 +111,33 @@ int32_t wrapper_randomx_size_of_hash() {
 }
 
 void wrapper_randomx_hash(int32_t id, uint8_t* bytes, int32_t length, uint8_t* out) {
-    //printf("[RandomX] hash[%d]> length: %d ; bytes: <%s> <%s>\n", id, length, bytes, out);
+    //printf("[RandomX] hash[%d]> length: %d\n", id, length);
 
-    /*
-    printf("bytes: ");
-    for (unsigned i = 0; i < length; ++i)
-        printf("%02x", bytes[i] & 0xff);
-    printf("\n");
-    */
-
+    //_printBytes("bytes", bytes, length);
     randomx_calculate_hash(_vms[id], bytes, length, out);
+    //_printBytes("hash", out, RANDOMX_HASH_SIZE);
+}
 
-    /*
-    printf("hash: ");
-    for (unsigned i = 0; i < RANDOMX_HASH_SIZE; ++i)
-        printf("%02x", out[i] & 0xff);
-    printf("\n");
-    */
+void wrapper_randomx_hash_first(int32_t id, uint8_t* bytes, int32_t length) {
+    //printf("[RandomX] hash_first[%d]> length: %d\n", id, length);
+
+    //_printBytes("bytes", bytes, length);
+    randomx_calculate_hash_first(_vms[id], bytes, length);
+}
+
+void wrapper_randomx_hash_next(int32_t id, uint8_t* bytes, int32_t length, uint8_t* outPrev) {
+    //printf("[RandomX] hash_next[%d]> length: %d\n", id, length);
+
+    //_printBytes("bytes", bytes, length);
+    randomx_calculate_hash_next(_vms[id], bytes, length, outPrev);
+    //_printBytes("hashPrev", outPrev, RANDOMX_HASH_SIZE);
+}
+
+void wrapper_randomx_hash_last(int32_t id, uint8_t* outPrev) {
+    //printf("[RandomX] hash_last[%d]\n", id);
+
+    randomx_calculate_hash_last(_vms[id], outPrev);
+    //_printBytes("hashPrev", outPrev, RANDOMX_HASH_SIZE);
 }
 
 void wrapper_randomx_destroy(int32_t id) {

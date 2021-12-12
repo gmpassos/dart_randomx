@@ -22,6 +22,24 @@ typedef FFIFunctionRandomxHash = ffi.Void Function(ffi.Int32 id,
 typedef FunctionRandomxHash = void Function(int id,
     ffi.Pointer<ffi.Uint8> bytes, int length, ffi.Pointer<ffi.Uint8> out);
 
+typedef FFIFunctionRandomxHashFirst = ffi.Void Function(
+    ffi.Int32 id, ffi.Pointer<ffi.Uint8> bytes, ffi.Int32 length);
+typedef FunctionRandomxHashFirst = void Function(
+    int id, ffi.Pointer<ffi.Uint8> bytes, int length);
+
+typedef FFIFunctionRandomxHashNext = ffi.Void Function(
+    ffi.Int32 id,
+    ffi.Pointer<ffi.Uint8> bytes,
+    ffi.Int32 length,
+    ffi.Pointer<ffi.Uint8> prevOut);
+typedef FunctionRandomxHashNext = void Function(int id,
+    ffi.Pointer<ffi.Uint8> bytes, int length, ffi.Pointer<ffi.Uint8> prevOut);
+
+typedef FFIFunctionRandomxHashLast = ffi.Void Function(
+    ffi.Int32 id, ffi.Pointer<ffi.Uint8> prevOut);
+typedef FunctionRandomxHashLast = void Function(
+    int id, ffi.Pointer<ffi.Uint8> prevOut);
+
 typedef FFIFunctionRandomxDestroy = ffi.Void Function(ffi.Int32 id);
 typedef FunctionRandomxDestroy = void Function(int id);
 
@@ -93,6 +111,9 @@ class RandomX {
   static late final FunctionRandomxInit _functionRandomxInit;
   static late final FunctionRandomxSizeOfHash _functionRandomxSizeOfHash;
   static late final FunctionRandomxHash _functionRandomxHash;
+  static late final FunctionRandomxHashFirst _functionRandomxHashFirst;
+  static late final FunctionRandomxHashNext _functionRandomxHashNext;
+  static late final FunctionRandomxHashLast _functionRandomxHashLast;
   static late final FunctionRandomxDestroy _functionRandomxDestroy;
 
   static void _mapLibFunctions(ffi.DynamicLibrary dynLib) {
@@ -105,6 +126,13 @@ class RandomX {
     _functionRandomxHash =
         dynLib.lookupFunction<FFIFunctionRandomxHash, FunctionRandomxHash>(
             'wrapper_randomx_hash');
+    _functionRandomxHashFirst = dynLib.lookupFunction<
+        FFIFunctionRandomxHashFirst,
+        FunctionRandomxHashFirst>('wrapper_randomx_hash_first');
+    _functionRandomxHashNext = dynLib.lookupFunction<FFIFunctionRandomxHashNext,
+        FunctionRandomxHashNext>('wrapper_randomx_hash_next');
+    _functionRandomxHashLast = dynLib.lookupFunction<FFIFunctionRandomxHashLast,
+        FunctionRandomxHashLast>('wrapper_randomx_hash_last');
     _functionRandomxDestroy = dynLib.lookupFunction<FFIFunctionRandomxDestroy,
         FunctionRandomxDestroy>('wrapper_randomx_destroy');
   }
@@ -183,11 +211,9 @@ class RandomX {
   static bool isMacOSArm64() {
     if (!Platform.isMacOS) return false;
     try {
-      var process = Process.runSync('/usr/bin/uname', ['-a']);
-      var output = '${process.stdout}'.toLowerCase();
-      var idx = output.lastIndexOf('kernel');
-      var rest = idx >= 0 ? output.substring(idx) : output;
-      return rest.contains('arm64');
+      var process = Process.runSync('/usr/bin/uname', ['-m']);
+      var output = '${process.stdout}'.toLowerCase().trim();
+      return output == 'arm64';
     } catch (e) {
       print(e);
       return false;
@@ -195,8 +221,18 @@ class RandomX {
   }
 
   static int _idCount = 0;
+  static final List<int> _destroyedIDs = <int>[];
 
-  final int id = ++_idCount;
+  static int _getFreeID() {
+    if (_destroyedIDs.isNotEmpty) {
+      var id = _destroyedIDs.removeAt(0);
+      return id;
+    }
+    return ++_idCount;
+  }
+
+  final int id = _getFreeID();
+
   late final int sizeOfHash;
 
   /// [RandomX] default constructor.
@@ -230,10 +266,18 @@ class RandomX {
   /// Returns `true` if [init] was called with `fullMemory`.
   bool? get fullMemory => _fullMemory;
 
+  bool _initialized = false;
+
+  /// Returns `true` if this instance is already initialized.
+  bool get isInitialized => _initialized;
+
   /// Initializes the `RandomX` instance with [key].
   ///
   /// - [fullMemory] if `true` will use 2G+ of memory (fast mode).
   void init(Uint8List key, {bool fullMemory = false}) {
+    if (_initialized) return;
+    _initialized = true;
+
     _initKey = UnmodifiableUint8ListView(Uint8List.fromList(key));
     var keyPointer = key.asPointer();
     _functionRandomxInit(id, keyPointer, key.length, fullMemory ? 1 : 0);
@@ -241,6 +285,7 @@ class RandomX {
     keyPointer.free();
   }
 
+  /// Creates a [Uint8List] of the size of the [hash] output ([sizeOfHash]).
   Uint8List createHashBytesArray() => Uint8List(sizeOfHash);
 
   ffi.Pointer<ffi.Uint8>? _hashInputPointer;
@@ -273,15 +318,23 @@ class RandomX {
 
   /// Hash [bytes] and puts the result into [output].
   void hashTo(Uint8List bytes, Uint8List output) {
+    if (_destroyed) {
+      _throwAlreadyDestroyed();
+    }
+
     var inputPointer = _getInputPointer(bytes.length);
     inputPointer.setBytes(bytes);
 
-    var outputPoints = _getOutputPointer();
+    var outputPointers = _getOutputPointer();
 
-    _functionRandomxHash(id, inputPointer, bytes.length, outputPoints);
+    _functionRandomxHash(id, inputPointer, bytes.length, outputPointers);
 
-    final outBytes = outputPoints.asTypedList(sizeOfHash);
+    final outBytes = outputPointers.asTypedList(sizeOfHash);
     output.setAll(0, outBytes);
+  }
+
+  void _throwAlreadyDestroyed() {
+    throw StateError("Can't hash: already destroyed instance!");
   }
 
   /// Hash [bytes] and returns the result as a [Uint8List].
@@ -291,8 +344,62 @@ class RandomX {
     return output;
   }
 
-  /// Destroys `this` `RandomX` instance resources.
-  void destroy() => _functionRandomxDestroy(id);
+  /// The [RandomX] `hash_first` function.
+  void hashFirst(Uint8List bytes) {
+    if (_destroyed) {
+      _throwAlreadyDestroyed();
+    }
+
+    var inputPointer = _getInputPointer(bytes.length);
+    inputPointer.setBytes(bytes);
+
+    _functionRandomxHashFirst(id, inputPointer, bytes.length);
+  }
+
+  /// The [RandomX] `hash_next` function.
+  void hashNext(Uint8List bytes, Uint8List prevOutput) {
+    if (_destroyed) {
+      _throwAlreadyDestroyed();
+    }
+
+    var inputPointer = _getInputPointer(bytes.length);
+    inputPointer.setBytes(bytes);
+
+    var outputPointers = _getOutputPointer();
+
+    _functionRandomxHashNext(id, inputPointer, bytes.length, outputPointers);
+
+    final outBytes = outputPointers.asTypedList(sizeOfHash);
+    prevOutput.setAll(0, outBytes);
+  }
+
+  /// The [RandomX] `hash_last` function.
+  void hashLast(Uint8List prevOutput) {
+    if (_destroyed) {
+      _throwAlreadyDestroyed();
+    }
+
+    var outputPointers = _getOutputPointer();
+
+    _functionRandomxHashLast(id, outputPointers);
+
+    final outBytes = outputPointers.asTypedList(sizeOfHash);
+    prevOutput.setAll(0, outBytes);
+  }
+
+  bool _destroyed = false;
+
+  /// Returns `true` if this instance is already destroyed.
+  bool get isDestroyed => _destroyed;
+
+  /// Destroys `this` [RandomX] instance resources.
+  void destroy() {
+    if (_destroyed) return;
+    _destroyed = true;
+
+    _functionRandomxDestroy(id);
+    _destroyedIDs.add(id);
+  }
 
   @override
   String toString() =>

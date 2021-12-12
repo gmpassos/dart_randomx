@@ -1,3 +1,10 @@
+## 1.0.2
+
+- Improve `init` and `destroy`.
+- Reuse destroyed `ID`s.
+- Added support for `hash_first`, `hash_next` and `hash_last` functions.
+- Improved tests.
+
 ## 1.0.1
 
 - Added executable: 
