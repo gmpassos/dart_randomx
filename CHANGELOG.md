@@ -1,3 +1,8 @@
+## 1.0.3
+
+- Improved platform detection.
+- `pubspec.yaml`: update description.
+
 ## 1.0.2
 
 - Improve `init` and `destroy`.

@@ -208,18 +208,6 @@ class RandomX {
     throw 'Unsupported platform ${Platform.operatingSystem}';
   }
 
-  static bool isMacOSArm64() {
-    if (!Platform.isMacOS) return false;
-    try {
-      var process = Process.runSync('/usr/bin/uname', ['-m']);
-      var output = '${process.stdout}'.toLowerCase().trim();
-      return output == 'arm64';
-    } catch (e) {
-      print(e);
-      return false;
-    }
-  }
-
   static int _idCount = 0;
   static final List<int> _destroyedIDs = <int>[];
 
@@ -401,9 +389,74 @@ class RandomX {
     _destroyedIDs.add(id);
   }
 
+  /// Returns the [platformOS] and [platformArchitecture].
+  String get platform => '$platformOS/$platformArchitecture';
+
+  /// The current Platform OS name.
+  String get platformOS {
+    if (Platform.isWindows) {
+      return 'Windows';
+    } else if (Platform.isLinux) {
+      return 'Linux';
+    } else if (Platform.isMacOS) {
+      return 'macOS';
+    } else {
+      throw StateError('Unknown platform');
+    }
+  }
+
+  /// The current Platform architecture name.
+  String get platformArchitecture {
+    if (Platform.isWindows) {
+      return 'x86';
+    } else if (Platform.isLinux) {
+      return _runUnameM()!;
+    } else if (Platform.isMacOS) {
+      return _runUnameM()!;
+    } else {
+      throw StateError('Unknown platform');
+    }
+  }
+
+  /// Returns `true` if this is a `macOS` `arm64`.
+  static bool isMacOSArm64() {
+    if (!Platform.isMacOS) return false;
+    var output = _runUnameM()!;
+    return output == 'arm64';
+  }
+
+  static String? _runUnameM() {
+    if (!Platform.isLinux && !Platform.isMacOS) return null;
+    return _runProcess(['/usr/bin/uname', '/bin/uname'], ['-m'], 0)
+        .toLowerCase()
+        .trim();
+  }
+
+  static String _runProcess(
+      List<String> possibleCMDs, List<String> args, int exitCode) {
+    Object? error;
+    for (var cmd in possibleCMDs) {
+      try {
+        var process = Process.runSync(cmd, args);
+        if (process.exitCode == exitCode) {
+          return process.stdout;
+        }
+      } catch (e) {
+        error == e;
+        continue;
+      }
+    }
+
+    if (error != null) {
+      throw error;
+    } else {
+      throw StateError("Can't run any of the possible commands: $possibleCMDs");
+    }
+  }
+
   @override
   String toString() =>
-      'RandomX{ id: $id, fullMemory: $fullMemory, sizeOfHash: $sizeOfHash, initKey: ${initKey?.toHex()} }';
+      'RandomX{ id: $id, fullMemory: $fullMemory, sizeOfHash: $sizeOfHash, initKey: ${initKey?.toHex()}, platform: $platform }';
 }
 
 ffi.Pointer<ffi.Uint8> createBytesPointer(int length) =>
