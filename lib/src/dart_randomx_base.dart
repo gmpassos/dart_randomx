@@ -9,6 +9,12 @@ import 'package:path/path.dart' as path;
 
 import 'dart_randomx_extension.dart';
 
+typedef FFIFunctionRandomxGetID = ffi.Int32 Function();
+typedef FunctionRandomxGetID = int Function();
+
+typedef FFIFunctionRandomxReleaseID = ffi.Void Function(ffi.Int32 id);
+typedef FunctionRandomxReleaseID = void Function(int id);
+
 typedef FFIFunctionRandomxInit = ffi.Void Function(ffi.Int32 id,
     ffi.Pointer<ffi.Uint8> key, ffi.Int32 length, ffi.Uint8 fullMem);
 typedef FunctionRandomxInit = void Function(
@@ -108,6 +114,8 @@ class RandomX {
     return completer.future;
   }
 
+  static late final FunctionRandomxGetID _functionRandomxGetID;
+  static late final FunctionRandomxReleaseID _functionRandomxReleaseID;
   static late final FunctionRandomxInit _functionRandomxInit;
   static late final FunctionRandomxSizeOfHash _functionRandomxSizeOfHash;
   static late final FunctionRandomxHash _functionRandomxHash;
@@ -117,15 +125,24 @@ class RandomX {
   static late final FunctionRandomxDestroy _functionRandomxDestroy;
 
   static void _mapLibFunctions(ffi.DynamicLibrary dynLib) {
+    _functionRandomxGetID =
+        dynLib.lookupFunction<FFIFunctionRandomxGetID, FunctionRandomxGetID>(
+            'wrapper_randomx_get_id');
+    _functionRandomxReleaseID = dynLib.lookupFunction<
+        FFIFunctionRandomxReleaseID,
+        FunctionRandomxReleaseID>('wrapper_randomx_release_id');
+
     _functionRandomxInit =
         dynLib.lookupFunction<FFIFunctionRandomxInit, FunctionRandomxInit>(
             'wrapper_randomx_init');
     _functionRandomxSizeOfHash = dynLib.lookupFunction<
         FFIFunctionRandomxSizeOfHash,
         FunctionRandomxSizeOfHash>('wrapper_randomx_size_of_hash');
+
     _functionRandomxHash =
         dynLib.lookupFunction<FFIFunctionRandomxHash, FunctionRandomxHash>(
             'wrapper_randomx_hash');
+
     _functionRandomxHashFirst = dynLib.lookupFunction<
         FFIFunctionRandomxHashFirst,
         FunctionRandomxHashFirst>('wrapper_randomx_hash_first');
@@ -133,6 +150,7 @@ class RandomX {
         FunctionRandomxHashNext>('wrapper_randomx_hash_next');
     _functionRandomxHashLast = dynLib.lookupFunction<FFIFunctionRandomxHashLast,
         FunctionRandomxHashLast>('wrapper_randomx_hash_last');
+
     _functionRandomxDestroy = dynLib.lookupFunction<FFIFunctionRandomxDestroy,
         FunctionRandomxDestroy>('wrapper_randomx_destroy');
   }
@@ -208,16 +226,7 @@ class RandomX {
     throw 'Unsupported platform ${Platform.operatingSystem}';
   }
 
-  static int _idCount = 0;
-  static final List<int> _destroyedIDs = <int>[];
-
-  static int _getFreeID() {
-    if (_destroyedIDs.isNotEmpty) {
-      var id = _destroyedIDs.removeAt(0);
-      return id;
-    }
-    return ++_idCount;
-  }
+  static int _getFreeID() => _functionRandomxGetID();
 
   final int id = _getFreeID();
 
@@ -271,6 +280,15 @@ class RandomX {
     _functionRandomxInit(id, keyPointer, key.length, fullMemory ? 1 : 0);
     _fullMemory = fullMemory;
     keyPointer.free();
+  }
+
+  void disposeBuffers() {
+    _hashInputPointerLength = 0;
+    _hashInputPointer?.free();
+    _hashInputPointer = null;
+
+    _hashOutputPointer?.free();
+    _hashOutputPointer = null;
   }
 
   /// Creates a [Uint8List] of the size of the [hash] output ([sizeOfHash]).
@@ -385,8 +403,10 @@ class RandomX {
     if (_destroyed) return;
     _destroyed = true;
 
+    disposeBuffers();
+
     _functionRandomxDestroy(id);
-    _destroyedIDs.add(id);
+    _functionRandomxReleaseID(id);
   }
 
   /// Returns the [platformOS] and [platformArchitecture].

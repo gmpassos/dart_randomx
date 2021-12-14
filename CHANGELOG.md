@@ -1,3 +1,7 @@
+## 1.0.4
+
+- Added thread-safe support, to be used with multiple Dart `Isolate`.
+
 ## 1.0.3
 
 - Improved platform detection.

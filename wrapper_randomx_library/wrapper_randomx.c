@@ -7,6 +7,11 @@
 #include "RandomX/src/randomx.h"
 #include "wrapper_randomx.h"
 
+pthread_mutex_t _randomXMUTEX = PTHREAD_MUTEX_INITIALIZER;
+
+bool _randomXIDsZeroed = false;
+
+bool _randomXIDs[1024];
 randomx_cache* _randomXCaches[1024];
 randomx_dataset* _randomXDatasets[1024];
 randomx_vm* _vms[1024];
@@ -35,6 +40,48 @@ void *_thread_init_dataset(void *arguments) {
 
    pthread_exit(NULL);
    return NULL;
+}
+
+int32_t wrapper_randomx_get_id() {
+    pthread_mutex_lock( &_randomXMUTEX );
+
+    if (!_randomXIDsZeroed) {
+        for (int i = 0; i < 1024; ++i) {
+            _randomXIDs[i] = false;
+        }
+        _randomXIDsZeroed = true ;
+    }
+
+    int32_t id = -1;
+    for (int i = 1; i < 1024; ++i) {
+        if ( !_randomXIDs[i] ) {
+            _randomXIDs[i] = true ;
+            id = i ;
+            break;
+        }
+    }
+
+    pthread_mutex_unlock( &_randomXMUTEX );
+
+    if (id > 0) {
+        return id ;
+    }
+
+    printf("[RandomX] [WARNING] No free ID! More than 1023 instances allocated?\n");
+    return -1;
+}
+
+void wrapper_randomx_release_id(int32_t id) {
+    pthread_mutex_lock( &_randomXMUTEX );
+
+    if (_randomXIDs[id]) {
+        _randomXIDs[id] = false ;
+    }
+    else {
+        printf("[RandomX] [WARNING] Trying to releasing not used ID: #%d\n", id);
+    }
+
+    pthread_mutex_unlock( &_randomXMUTEX );
 }
 
 void wrapper_randomx_init(int32_t id, uint8_t* key, int32_t length, bool fullMem) {

@@ -44,6 +44,8 @@ const hashes = {
 
 void main() {
   group('RandomX', () {
+    final initKey = Uint8List.fromList([97, 98, 99, 100, 101, 102, 0]);
+
     setUp(() async {
       print(
           '=================================================================');
@@ -61,11 +63,43 @@ void main() {
 
       print(randomX);
 
-      randomX.init(Uint8List.fromList([97, 98, 99, 100, 101, 102, 0]));
+      randomX.init(initKey);
+
+      expect(randomX.initKey, equals(initKey));
+      expect(randomX.isInitialized, isTrue);
+      expect(randomX.isDestroyed, isFalse);
 
       _testHashes(randomX);
 
+      print('-- Destroying: $randomX...');
       randomX.destroy();
+
+      expect(randomX.isDestroyed, isTrue);
+    });
+
+    test('multiple', () {
+      var randomX1 = RandomX();
+      var randomX2 = RandomX();
+      var randomX3 = RandomX();
+
+      print(randomX1);
+      print(randomX2);
+      print(randomX3);
+
+      randomX1.init(initKey);
+      randomX2.init(initKey);
+      randomX3.init(initKey);
+
+      _testHashes(randomX1);
+      _testHashes(randomX2);
+      _testHashes(randomX3);
+
+      print('-- Destroying: $randomX1...');
+      randomX1.destroy();
+      print('-- Destroying: $randomX2...');
+      randomX2.destroy();
+      print('-- Destroying: $randomX3...');
+      randomX3.destroy();
     });
 
     test(
@@ -76,11 +110,11 @@ void main() {
         print(randomX);
 
         print('-- RandomX initializing full memory...');
-        randomX.init(Uint8List.fromList([97, 98, 99, 100, 101, 102, 0]),
-            fullMemory: true);
+        randomX.init(Uint8List.fromList(initKey), fullMemory: true);
 
         _testHashes(randomX);
 
+        print('-- Destroying: $randomX...');
         randomX.destroy();
       },
       //skip: true,

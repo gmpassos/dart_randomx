@@ -1,4 +1,7 @@
 
+int32_t wrapper_randomx_get_id();
+void wrapper_randomx_release_id(int32_t id);
+
 void wrapper_randomx_init(int32_t id, uint8_t* key, int32_t length, bool fullMem);
 
 int32_t wrapper_randomx_size_of_hash();
