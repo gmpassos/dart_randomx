@@ -2,7 +2,7 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:dart_randomx/dart_randomx.dart';
-import 'package:dart_randomx/src/dart_randomx_extension.dart';
+import 'package:statistics/statistics.dart';
 import 'package:test/test.dart';
 
 const hashes = {

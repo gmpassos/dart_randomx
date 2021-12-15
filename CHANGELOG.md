@@ -1,3 +1,8 @@
+## 1.0.5
+
+- Removed extensions: now using package `statistics`.
+- statistics: ^1.0.7
+
 ## 1.0.4
 
 - Added thread-safe support, to be used with multiple Dart `Isolate`.

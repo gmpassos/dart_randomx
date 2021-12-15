@@ -1,6 +1,6 @@
 name: dart_randomx
 description: Dart wrapper for RandomX proof-of-work (PoW) algorithm with built-in binaries for Linux and macOS.
-version: 1.0.4
+version: 1.0.5
 homepage: https://github.com/gmpassos/dart_randomx
 
 environment:
@@ -14,6 +14,7 @@ dependencies:
   ffi: ^1.1.2
   base_codecs: ^1.0.1
   collection: ^1.15.0
+  statistics: ^1.0.7
 
 dev_dependencies:
   lints: ^1.0.0

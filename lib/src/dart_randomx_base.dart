@@ -6,8 +6,7 @@ import 'dart:typed_data';
 
 import 'package:ffi/ffi.dart';
 import 'package:path/path.dart' as path;
-
-import 'dart_randomx_extension.dart';
+import 'package:statistics/statistics.dart';
 
 typedef FFIFunctionRandomxGetID = ffi.Int32 Function();
 typedef FunctionRandomxGetID = int Function();
