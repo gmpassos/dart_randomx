@@ -2,6 +2,8 @@
 
 set -x
 
+cp -f CMakeLists-linux-macos.txt CMakeLists.txt
+
 make clean
 cmake .
 make
