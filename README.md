@@ -56,6 +56,16 @@ Future<void> main() async {
 }
 ```
 
+## Library Binaries
+
+This package already comes with built-in binaries for the `RandomX` wrapper library.
+They are located at the sub-directory `wrapper_randomx_library/`:
+
+- libwrapper_randomx.dll *(Windows x64)*
+- libwrapper_randomx.so *(Linux x64)*
+- libwrapper_randomx-x64.dylib *(macOS x64)*
+- libwrapper_randomx-arm64.dylib *(macOS ARM64)*
+
 ## Project Build
 
 See the script `build-ffi-lib.sh` to build the libraries:
@@ -76,8 +86,18 @@ The directory `wrapper_randomx_library` has the source code for the
 
    Builds the wrapper, linking with `librandomx.a`.
 
+For **Windows** support see the file `wrapper_randomx_library/build-all-mingw64.sh`.
+You will need to install [MSYS2][MSYS2] and some packages:
 
-**NOTE:** *This process was tested on `MaxOS` and `Ubuntu`.*
+```shell
+pacman -S --needed development
+pacman -S --needed base-devel mingw-w64-x86_64-toolchain mingw-w64-x86_64-cmake mingw-w64-x86_64-gcc
+pacman -S --needed ninja
+```
+
+[MSYS2]: https://www.msys2.org/docs/cmake/
+
+**NOTE:** *The build process was tested on `macOS 11`, `Linux (Ubuntu 18)` and `Windows 10`.*
 
 [dart_ffi]: https://dart.dev/guides/libraries/c-interop
 

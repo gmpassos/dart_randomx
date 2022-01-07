@@ -1,3 +1,7 @@
+## 1.0.6
+
+- Added Windows DLL (static MinGW-w64 build).
+
 ## 1.0.5
 
 - Removed extensions: now using package `statistics`.
